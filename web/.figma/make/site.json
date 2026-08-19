@@ -1,0 +1,11 @@
+{
+  "title": "GFS",
+  "description": "This web application allows auto service businesses to create a professional site where clients can book appointments, enhancing customer engagement and service efficiency.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
