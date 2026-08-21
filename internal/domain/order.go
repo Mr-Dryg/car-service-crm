@@ -1,17 +1,68 @@
 package domain
 
-import "time"
+import (
+	"errors"
+	"fmt"
+	"slices"
+	"time"
+)
+
+const (
+	StatusNew             = "new"              // Новая неподтвержденная заявка
+	StatusConfirmed       = "confirmed"        // Подтвержденная заявка
+	StatusCancelRequested = "cancel_requested" // Запрос на отмену
+	StatusCanceled        = "canceled"         // Подтвержденная отмена
+	StatusInProgress      = "in_progress"      // Ремонт
+	StatusReady           = "ready"            // Машина готова, ждет выдачи
+	StatusCompleted       = "completed"        // Машина выдана
+)
+
+var (
+	ErrInvalidStatusTransition = func(currentStatus, newStatus string) error {
+		return fmt.Errorf("Invalid status transition from %q to %q", currentStatus, newStatus)
+	}
+	ErrOrderIsCanceled  = errors.New("Invalid status transition on canceled order")
+	ErrOrderIsCompleted = errors.New("Forbidden to change status of completed order")
+)
 
 type Order struct {
-	Id            int64
-	BranchId      int64
-	CarId         int64
-	ServiceType   string
-	Status        string
-	PreferredDate string
-	PreferredTime string
-	Cost          float64
-	Notes         string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	Id              int64
+	BranchId        int64
+	CarId           int64
+	ServiceType     string
+	Status          string
+	PreferredDate   string
+	PreferredTime   string
+	Cost            float64
+	ClientConfirmed bool
+	Notes           string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+func (o *Order) ChangeStatus(newStatus string) error {
+	var validStatuses []string
+
+	switch o.Status {
+	case StatusCancelRequested:
+		validStatuses = []string{StatusConfirmed, StatusCanceled}
+	case StatusCanceled:
+		return ErrOrderIsCanceled
+	case StatusNew:
+		validStatuses = []string{StatusConfirmed, StatusCancelRequested}
+	case StatusConfirmed:
+		validStatuses = []string{StatusInProgress, StatusCancelRequested}
+	case StatusInProgress:
+		validStatuses = []string{StatusReady}
+	case StatusReady:
+		validStatuses = []string{StatusConfirmed}
+	case StatusCompleted:
+		return ErrOrderIsCompleted
+	}
+
+	if slices.Contains(validStatuses, newStatus) {
+		o.Status = newStatus
+		return nil
+	}
+	return ErrInvalidStatusTransition(o.Status, newStatus)
 }
