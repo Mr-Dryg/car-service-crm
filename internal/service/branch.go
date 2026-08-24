@@ -10,7 +10,7 @@ type BranchService struct {
 	branchRepo BranchRepository
 }
 
-func NewBranchRepository(repo BranchRepository) *BranchService {
+func NewBranchService(repo BranchRepository) *BranchService {
 	return &BranchService{
 		branchRepo: repo,
 	}
