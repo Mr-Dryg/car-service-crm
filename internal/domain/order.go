@@ -27,8 +27,8 @@ var (
 
 type Order struct {
 	ID              int64
-	BranchId        int64
-	CarId           int64
+	BranchID        int64
+	CarID           int64
 	ServiceType     string
 	Status          string
 	PreferredDate   string

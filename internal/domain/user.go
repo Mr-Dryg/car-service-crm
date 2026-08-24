@@ -9,7 +9,7 @@ type User struct {
 	Email        string
 	PasswordHash string
 	Role         string
-	TelegramId   int64
-	BranchId     int64
+	TelegramID   int64
+	BranchID     int64
 	CreatedAt    time.Time
 }
