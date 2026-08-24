@@ -26,7 +26,7 @@ var (
 )
 
 type Order struct {
-	Id              int64
+	ID              int64
 	BranchId        int64
 	CarId           int64
 	ServiceType     string

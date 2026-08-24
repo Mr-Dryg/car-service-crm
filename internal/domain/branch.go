@@ -3,7 +3,7 @@ package domain
 import "time"
 
 type Branch struct {
-	Id        int64
+	ID        int64
 	Name      string
 	Address   string
 	Phone     string
