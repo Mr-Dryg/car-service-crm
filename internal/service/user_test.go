@@ -1,0 +1,56 @@
+package service
+
+import (
+    "context"
+    "testing"
+
+    "github.com/Mr-Dryg/car-service-crm/internal/domain"
+    "golang.org/x/crypto/bcrypt"
+)
+
+type fakeUserRepo struct {
+    created *domain.User
+}
+
+func (f *fakeUserRepo) Create(ctx context.Context, user *domain.User) error {
+    f.created = user
+    return nil
+}
+
+func (f *fakeUserRepo) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+    return nil, nil
+}
+
+func (f *fakeUserRepo) GetByPhone(ctx context.Context, phone string) (*domain.User, error) {
+    return nil, nil
+}
+
+func (f *fakeUserRepo) GetByTelegramID(ctx context.Context, tgID int64) (*domain.User, error) {
+    return nil, nil
+}
+
+func TestCreateHashesPassword(t *testing.T) {
+    repo := &fakeUserRepo{}
+    svc := NewUserService(repo)
+
+    dto := &CreateUserDTO{
+        Name:     "Иван",
+        Phone:    "+7 (900) 123-45-67",
+        Email:    "ivan@example.com",
+        Password: "secret123",
+        Role:     "client",
+    }
+
+    user, err := svc.Create(context.Background(), dto)
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    if user.PasswordHash == dto.Password {
+        t.Error("password must not be stored in plain text")
+    }
+
+    if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(dto.Password)) != nil {
+        t.Error("password hash does not match original password")
+    }
+}

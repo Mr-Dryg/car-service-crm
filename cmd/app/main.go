@@ -7,6 +7,7 @@ import (
 	"github.com/Mr-Dryg/car-service-crm/internal/config"
 	"github.com/Mr-Dryg/car-service-crm/internal/domain"
 	"github.com/Mr-Dryg/car-service-crm/internal/repository/postgres"
+	"github.com/Mr-Dryg/car-service-crm/internal/service"
 	"github.com/joho/godotenv"
 )
 
@@ -30,18 +31,18 @@ func main() {
 
 	log.Println("success connection to db")
 
-	branchRepo := postgres.NewBranchRepository(pool)
+	branchService := service.NewBranchService(postgres.NewBranchRepository(pool))
 	firstBranch := &domain.Branch{
 		Name: "THE COOLEST STO",
 		Address: "Moscow",
 		Phone: "+7 (777) 777-77-77",
 	}
-	err = branchRepo.Create(ctx, firstBranch)
+	err = branchService.Create(ctx, firstBranch)
 	if err != nil {
 		log.Fatalf("creating branch with error: %v", err)
 	}
 
-	branches, err := branchRepo.GetAll(ctx)
+	branches, err := branchService.GetAll(ctx)
 	if err != nil {
 		log.Fatalf("getting braches with error: %v", err)
 	}
