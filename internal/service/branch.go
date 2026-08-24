@@ -16,8 +16,8 @@ func NewBranchRepository(repo BranchRepository) *BranchService {
 	}
 }
 
-func (s *BranchService) Create(ctx context.Context, branch domain.Branch) error {
-	return s.branchRepo.Create(ctx, &branch)
+func (s *BranchService) Create(ctx context.Context, branch *domain.Branch) error {
+	return s.branchRepo.Create(ctx, branch)
 }
 
 func (s *BranchService) GetAll(ctx context.Context) ([]domain.Branch, error) {
