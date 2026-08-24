@@ -19,10 +19,10 @@ const (
 
 var (
 	ErrInvalidStatusTransition = func(currentStatus, newStatus string) error {
-		return fmt.Errorf("Invalid status transition from %q to %q", currentStatus, newStatus)
+		return fmt.Errorf("invalid status transition from %q to %q", currentStatus, newStatus)
 	}
-	ErrOrderIsCanceled  = errors.New("Invalid status transition on canceled order")
-	ErrOrderIsCompleted = errors.New("Forbidden to change status of completed order")
+	ErrOrderIsCanceled  = errors.New("invalid status transition on canceled order")
+	ErrOrderIsCompleted = errors.New("forbidden to change status of completed order")
 )
 
 type Order struct {
@@ -55,7 +55,7 @@ func (o *Order) ChangeStatus(newStatus string) error {
 	case StatusInProgress:
 		validStatuses = []string{StatusReady}
 	case StatusReady:
-		validStatuses = []string{StatusConfirmed}
+		validStatuses = []string{StatusCompleted}
 	case StatusCompleted:
 		return ErrOrderIsCompleted
 	}
