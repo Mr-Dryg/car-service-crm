@@ -18,13 +18,13 @@ func NewBranchRepository(pool *pgxpool.Pool) *BranchRepository {
 }
 
 func (r *BranchRepository) Create(ctx context.Context, branch *domain.Branch) error {
-	query := "INSERT INTO branches (name, address, phone) VALUES ($1, $2, $3)"
+	query := `INSERT INTO branches (name, address, phone) VALUES ($1, $2, $3)`
 	_, err := r.db.Exec(ctx, query, branch.Name, branch.Address, branch.Phone)
 	return err
 }
 
 func (r *BranchRepository) GetAll(ctx context.Context) ([]domain.Branch, error) {
-	query := "SELECT id, name, address, phone, created_at FROM branches"
+	query := `SELECT id, name, address, phone, created_at FROM branches`
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
