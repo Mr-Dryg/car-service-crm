@@ -36,12 +36,14 @@ func TestChangeStatus(t *testing.T) {
 			order := Order{Status: tc.currentState}
 			err := order.ChangeStatus(tc.newState)
 
-			if err == nil && err != tc.expectError {
-				t.Errorf("err: nil, but expect: %v", tc.expectError)
-			} else if tc.expectError == nil && err != tc.expectError {
-				t.Errorf("expect: nil, but err: %v", err)
-			} else if tc.expectError == nil && tc.newState != order.Status {
-				t.Errorf("status didn't change: expect %q, got %q", tc.newState, order.Status)
+			if tc.expectError == nil {
+				if err != nil {
+					t.Errorf("expect: nil, but err: %v", err)
+				} else if tc.newState != order.Status {
+					t.Errorf("status didn't change: expect %q, got %q", tc.newState, order.Status)
+				}
+			} else if err == nil || err.Error() != tc.expectError.Error() {
+				t.Errorf("expect: %v, but err: %v", tc.expectError, err)
 			}
 		})
 	}
