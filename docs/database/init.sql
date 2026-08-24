@@ -43,7 +43,7 @@ CREATE TABLE orders (
     preferred_date DATE NOT NULL,
     preferred_time TIME NOT NULL,
     cost NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-    client_confirmed BOOLEAN DEFAULT FALSE
+    client_confirmed BOOLEAN DEFAULT FALSE,
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
