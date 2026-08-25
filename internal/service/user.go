@@ -24,32 +24,15 @@ func NewUserService(repo UserRepository) *UserService {
 	}
 }
 
-type CreateUserDTO struct {
-	Name       string
-	Phone      string
-	Email      string
-	Password   string
-	Role       string
-	TelegramID int64
-	BranchID   int64
-}
-
-func (s *UserService) Create(ctx context.Context, userDTO *CreateUserDTO) (*domain.User, error) {
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userDTO.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
+func (s *UserService) Create(ctx context.Context, user *domain.User, password string) error {
+	if password != "" {
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		user.PasswordHash = string(passwordHash)
 	}
-
-	user := &domain.User{
-		Name:         userDTO.Name,
-		Phone:        userDTO.Phone,
-		Email:        userDTO.Email,
-		PasswordHash: string(passwordHash),
-		Role:         userDTO.Role,
-		TelegramID:   userDTO.TelegramID,
-		BranchID:     userDTO.BranchID,
-	}
-	return user, s.userRepo.Create(ctx, user)
+	return s.userRepo.Create(ctx, user)
 }
 
 func (s *UserService) GetByEmail(ctx context.Context, email string) (*domain.User, error) {

@@ -33,24 +33,24 @@ func TestCreateHashesPassword(t *testing.T) {
     repo := &fakeUserRepo{}
     svc := NewUserService(repo)
 
-    dto := &CreateUserDTO{
+    user := &domain.User{
         Name:     "Иван",
         Phone:    "+7 (900) 123-45-67",
         Email:    "ivan@example.com",
-        Password: "secret123",
         Role:     "client",
     }
+    password := "secret123"
 
-    user, err := svc.Create(context.Background(), dto)
+    err := svc.Create(context.Background(), user, password)
     if err != nil {
         t.Fatal(err)
     }
 
-    if user.PasswordHash == dto.Password {
+    if user.PasswordHash == password {
         t.Error("password must not be stored in plain text")
     }
 
-    if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(dto.Password)) != nil {
+    if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)) != nil {
         t.Error("password hash does not match original password")
     }
 }
