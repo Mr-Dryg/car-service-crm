@@ -8,6 +8,13 @@ import (
 )
 
 func TestNewPool(t *testing.T) {
+	t.Setenv("DB_HOST", "localhost")
+	t.Setenv("DB_PORT", "5432")
+	t.Setenv("DB_USER", "db_user")
+	t.Setenv("DB_PASSWORD", "db_password")
+	t.Setenv("DB_NAME", "car_service")
+	t.Setenv("DB_SSLMODE", "disable")
+
 	cfg, err := config.Load()
 
 	if err != nil {
