@@ -32,20 +32,43 @@ func main() {
 	log.Println("success connection to db")
 
 	branchService := service.NewBranchService(postgres.NewBranchRepository(pool))
-	firstBranch := &domain.Branch{
+	branch := &domain.Branch{
 		Name: "THE COOLEST STO",
 		Address: "Moscow",
 		Phone: "+7 (777) 777-77-77",
 	}
-	err = branchService.Create(ctx, firstBranch)
+	err = branchService.Create(ctx, branch)
 	if err != nil {
 		log.Fatalf("creating branch with error: %v", err)
 	}
 
-	branches, err := branchService.GetAll(ctx)
+	userService := service.NewUserService(postgres.NewUserRepository(pool))
+	user := &domain.User{
+		Name: "Alex",
+		Phone: "+7 (111) 111-11-11",
+		Role: "client",
+	}
+	err = userService.Create(ctx, user, "")
 	if err != nil {
-		log.Fatalf("getting braches with error: %v", err)
+		log.Fatalf("creating user with error: %v", err)
 	}
 
-	log.Println(branches)
+	carService := service.NewCarService(postgres.NewCarRepository(pool))
+	car := &domain.Car{
+		UserID: user.ID,
+		LicensePlate: "Y777YB777",
+		Brand: "MAZDA",
+		Model: "MX-5",
+	}
+	err = carService.Create(ctx, car)
+	if err != nil {
+		log.Fatalf("creating car with error: %v", err)
+	}
+
+	cars, err := carService.GetByUserID(ctx, user.ID)
+	if err != nil {
+		log.Fatalf("getting car with error: %v", err)
+	}
+
+	log.Printf("cars for client %v: %v", user.Name, cars)
 }
