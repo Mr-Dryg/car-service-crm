@@ -59,5 +59,5 @@ func (r *CarRepository) GetByUserID(ctx context.Context, userID int64) ([]domain
 		}
 		cars = append(cars, car)
 	}
-	return cars, err
+	return cars, rows.Err()
 }
