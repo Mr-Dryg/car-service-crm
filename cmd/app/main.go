@@ -33,9 +33,9 @@ func main() {
 
 	branchService := service.NewBranchService(postgres.NewBranchRepository(pool))
 	branch := &domain.Branch{
-		Name: "THE COOLEST STO",
+		Name:    "THE COOLEST STO",
 		Address: "Moscow",
-		Phone: "+7 (777) 777-77-77",
+		Phone:   "+7 (777) 777-77-77",
 	}
 	err = branchService.Create(ctx, branch)
 	if err != nil {
@@ -44,9 +44,9 @@ func main() {
 
 	userService := service.NewUserService(postgres.NewUserRepository(pool))
 	user := &domain.User{
-		Name: "Alex",
+		Name:  "Alex",
 		Phone: "+7 (111) 111-11-11",
-		Role: "client",
+		Role:  "client",
 	}
 	err = userService.Create(ctx, user, "")
 	if err != nil {
@@ -55,10 +55,10 @@ func main() {
 
 	carService := service.NewCarService(postgres.NewCarRepository(pool))
 	car := &domain.Car{
-		UserID: user.ID,
+		UserID:       user.ID,
 		LicensePlate: "Y777YB777",
-		Brand: "MAZDA",
-		Model: "MX-5",
+		Brand:        "MAZDA",
+		Model:        "MX-5",
 	}
 	err = carService.Create(ctx, car)
 	if err != nil {

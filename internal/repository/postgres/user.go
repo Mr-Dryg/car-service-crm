@@ -90,10 +90,18 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		return nil, err
 	}
 
-	if email != nil { u.Email = *email }
-	if passwordHash != nil { u.PasswordHash = *passwordHash }
-	if telegramID != nil { u.TelegramID = *telegramID }
-	if branchID != nil { u.BranchID = *branchID }
+	if email != nil {
+		u.Email = *email
+	}
+	if passwordHash != nil {
+		u.PasswordHash = *passwordHash
+	}
+	if telegramID != nil {
+		u.TelegramID = *telegramID
+	}
+	if branchID != nil {
+		u.BranchID = *branchID
+	}
 
 	return &u, nil
 }
