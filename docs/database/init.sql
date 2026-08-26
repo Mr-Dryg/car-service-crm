@@ -36,7 +36,7 @@ CREATE TABLE cars (
 -- 4. Таблица заказов-нарядов
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
-    branch_id INTEGER NOT NULL REFERENCES branches(id) ON DELETE RESTRICT,
+    branch_id INTEGER REFERENCES branches(id) ON DELETE RESTRICT,
     car_id INTEGER NOT NULL REFERENCES cars(id) ON DELETE RESTRICT,
     service_type VARCHAR(255) NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'new',

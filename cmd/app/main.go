@@ -113,7 +113,7 @@ func main() {
 		log.Fatalf("confirming receipt with error: %v", err)
 	}
 
-	orders, err := orderService.GetBranchOrders(ctx, branch.ID)
+	orders, err := orderService.GetBranchOrders(ctx, branch.ID, true)
 	if err != nil {
 		log.Fatalf("getting orders by branch_id with error: %v", err)
 	}

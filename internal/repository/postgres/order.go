@@ -23,12 +23,16 @@ func (r *OrderRepository) Create(ctx context.Context, order *domain.Order, parse
 			  preferred_date, preferred_time, cost, client_confirmed, notes)
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			  RETURNING id, created_at, updated_at`
+	var branchID *int64
+	if order.BranchID > 0 {
+		branchID = &order.BranchID
+	}
 	var notes *string
 	if order.Notes != "" {
 		notes = &order.Notes
 	}
 	err := r.db.QueryRow(
-		ctx, query, order.BranchID, order.CarID, order.ServiceType,
+		ctx, query, branchID, order.CarID, order.ServiceType,
 		order.Status, parsedDate, order.PreferredTime, order.Cost,
 		order.ClientConfirmed, notes,
 	).Scan(&order.ID, &order.CreatedAt, &order.UpdatedAt)
@@ -44,11 +48,14 @@ func (r *OrderRepository) GetByOrderID(ctx context.Context, orderID int64) (*dom
 	return scanOrder(row)
 }
 
-func (r *OrderRepository) GetByBranchID(ctx context.Context, branchID int64) ([]domain.Order, error) {
+func (r *OrderRepository) GetByBranchID(ctx context.Context, branchID int64, includeCommon bool) ([]domain.Order, error) {
 	query := `SELECT id, branch_id, car_id, service_type,
 			  status, preferred_date, preferred_time, cost,
 			  client_confirmed, notes, created_at, updated_at
 			  FROM orders WHERE branch_id = $1`
+	if includeCommon {
+		query += " OR branch_id IS NULL"
+	}
 	rows, err := r.db.Query(ctx, query, branchID)
 	if err != nil {
 		return nil, err
@@ -125,9 +132,10 @@ func (r *OrderRepository) UpdateNotes(ctx context.Context, orderID int64, notes 
 func scanOrder(row rowScanner) (*domain.Order, error) {
 	var order domain.Order
 	var prefDate, prefTime time.Time
+	var branchID *int64
 	var notes *string
 	err := row.Scan(
-		&order.ID, &order.BranchID, &order.CarID, &order.ServiceType,
+		&order.ID, &branchID, &order.CarID, &order.ServiceType,
 		&order.Status, &prefDate, &prefTime, &order.Cost,
 		&order.ClientConfirmed, &notes, &order.CreatedAt, &order.UpdatedAt,
 	)
@@ -136,7 +144,9 @@ func scanOrder(row rowScanner) (*domain.Order, error) {
 	}
 	order.PreferredDate = prefDate.Format(domain.DateLayout)
 	order.PreferredTime = prefTime.Format(domain.TimeLayout)
-
+	if branchID != nil {
+		order.BranchID = *branchID
+	}
 	if notes != nil {
 		order.Notes = *notes
 	}

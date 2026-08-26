@@ -19,7 +19,7 @@ var (
 type OrderRepository interface {
 	Create(ctx context.Context, order *domain.Order, parsedDate time.Time) error
 	GetByOrderID(ctx context.Context, orderID int64) (*domain.Order, error)
-	GetByBranchID(ctx context.Context, branchID int64) ([]domain.Order, error)
+	GetByBranchID(ctx context.Context, branchID int64, includeCommon bool) ([]domain.Order, error)
 	GetByCarID(ctx context.Context, carID int64) ([]domain.Order, error)
 	UpdateStatus(ctx context.Context, orderID int64, status string) error
 	UpdateSchedule(ctx context.Context, orderID int64, prefDate time.Time, prefTime string) error
@@ -39,6 +39,12 @@ func NewOrderService(repo OrderRepository) *OrderService {
 }
 
 func (s *OrderService) Create(ctx context.Context, order *domain.Order) error {
+	if order.BranchID < 0 {
+		return errors.New("invalid branch_id")
+	}
+	if order.CarID <= 0 {
+		return errors.New("invalid car_id")
+	}
 	parsedDate, err := checkTimeAvailability(order.PreferredDate)
 	if err != nil {
 		return err
@@ -59,8 +65,8 @@ func (s *OrderService) GetOrder(ctx context.Context, orderID int64) (*domain.Ord
 	return s.orderRepo.GetByOrderID(ctx, orderID)
 }
 
-func (s *OrderService) GetBranchOrders(ctx context.Context, branchID int64) ([]domain.Order, error) {
-	return s.orderRepo.GetByBranchID(ctx, branchID)
+func (s *OrderService) GetBranchOrders(ctx context.Context, branchID int64, includeCommon bool) ([]domain.Order, error) {
+	return s.orderRepo.GetByBranchID(ctx, branchID, includeCommon)
 }
 
 func (s *OrderService) GetCarOrders(ctx context.Context, carID int64) ([]domain.Order, error) {
