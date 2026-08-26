@@ -31,18 +31,18 @@ var (
 )
 
 type Order struct {
-	ID              int64
-	BranchID        int64
-	CarID           int64
-	ServiceType     string
-	Status          string
-	PreferredDate   string
-	PreferredTime   string
-	Cost            float64
-	ClientConfirmed bool
-	Notes           string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID              int64     `json:"id"`
+	BranchID        int64     `json:"branch_id"`
+	CarID           int64     `json:"car_id"`
+	ServiceType     string    `json:"service_type"`
+	Status          string    `json:"status"`
+	PreferredDate   string    `json:"preferred_date"`
+	PreferredTime   string    `json:"preferred_time"`
+	Cost            float64   `json:"cost"`
+	ClientConfirmed bool      `json:"client_confirmed"`
+	Notes           string    `json:"notes"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 func (o *Order) ChangeStatus(newStatus string) error {
