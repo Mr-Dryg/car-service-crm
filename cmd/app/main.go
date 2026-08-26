@@ -67,9 +67,9 @@ func main() {
 
 	orderService := service.NewOrderService(postgres.NewOrderRepository(pool))
 	order := &domain.Order{
-		BranchID: branch.ID,
-		CarID: car.ID,
-		ServiceType: "window tinting",
+		BranchID:      branch.ID,
+		CarID:         car.ID,
+		ServiceType:   "window tinting",
 		PreferredDate: "27-08-2026",
 		PreferredTime: "15:00",
 	}
