@@ -65,10 +65,58 @@ func main() {
 		log.Fatalf("creating car with error: %v", err)
 	}
 
-	cars, err := carService.GetByUserID(ctx, user.ID)
+	orderService := service.NewOrderService(postgres.NewOrderRepository(pool))
+	order := &domain.Order{
+		BranchID: branch.ID,
+		CarID: car.ID,
+		ServiceType: "window tinting",
+		PreferredDate: "27-08-2026",
+		PreferredTime: "15:00",
+	}
+	err = orderService.Create(ctx, order)
 	if err != nil {
-		log.Fatalf("getting car with error: %v", err)
+		log.Fatalf("creating order with error: %v", err)
 	}
 
-	log.Printf("cars for client %v: %v", user.Name, cars)
+	err = orderService.ChangeStatus(ctx, order.ID, domain.StatusConfirmed)
+	if err != nil {
+		log.Fatalf("changing status with error: %v", err)
+	}
+
+	err = orderService.RescheduleOrder(ctx, order.ID, "30-08-2026", "10:00")
+	if err != nil {
+		log.Fatalf("rescheduling order with error: %v", err)
+	}
+
+	err = orderService.UpdateCost(ctx, order.ID, 300.39)
+	if err != nil {
+		log.Fatalf("updating cost with error: %v", err)
+	}
+
+	err = orderService.ChangeStatus(ctx, order.ID, domain.StatusInProgress)
+	if err != nil {
+		log.Fatalf("changing status with error: %v", err)
+	}
+
+	err = orderService.ChangeStatus(ctx, order.ID, domain.StatusReady)
+	if err != nil {
+		log.Fatalf("changing status with error: %v", err)
+	}
+
+	err = orderService.ConfirmReceipt(ctx, order.ID)
+	if err != nil {
+		log.Fatalf("confirming receipt with error: %v", err)
+	}
+
+	err = orderService.UpdateNotes(ctx, order.ID, "some new notes")
+	if err != nil {
+		log.Fatalf("confirming receipt with error: %v", err)
+	}
+
+	orders, err := orderService.GetBranchOrders(ctx, branch.ID)
+	if err != nil {
+		log.Fatalf("getting orders by branch_id with error: %v", err)
+	}
+
+	log.Printf("orders: %+v", orders)
 }

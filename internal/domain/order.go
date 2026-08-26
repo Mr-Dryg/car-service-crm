@@ -17,6 +17,11 @@ const (
 	StatusCompleted       = "completed"        // Машина выдана
 )
 
+const (
+	DateLayout = "02-01-2006"
+	TimeLayout = "15:04"
+)
+
 var (
 	ErrInvalidStatusTransition = func(currentStatus, newStatus string) error {
 		return fmt.Errorf("invalid status transition from %q to %q", currentStatus, newStatus)
