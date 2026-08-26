@@ -17,3 +17,8 @@ DB_SSLMODE=disable
 ```
 $ docker compose up -d --build
 ``` 
+
+### 3. Создать таблицы при первом запуске
+```
+$ docker exec -i car_service_db psql -U db_user -d car_service < docs/database/init.sql
+```
