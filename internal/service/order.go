@@ -148,13 +148,13 @@ func (s *OrderService) GetCarOrders(ctx context.Context, carID int64) ([]domain.
 	return s.orderRepo.GetByCarID(ctx, carID)
 }
 
-func (s *OrderService) ChangeStatus(ctx context.Context, orderID int64, status string) error {
+func (s *OrderService) UpdateStatus(ctx context.Context, orderID int64, status string) error {
 	order, err := s.orderRepo.GetByOrderID(ctx, orderID)
 	if err != nil {
 		return err
 	}
 
-	err = order.ChangeStatus(status)
+	err = order.UpdateStatus(status)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func (s *OrderService) RescheduleOrder(ctx context.Context, orderID int64, prefD
 		return err
 	}
 
-	if IsArchivedOrder(order) {
+	if isArchivedOrder(order) {
 		return ErrUpdateArchivedOrder
 	}
 
@@ -185,7 +185,7 @@ func (s *OrderService) UpdateCost(ctx context.Context, orderID int64, cost float
 		return err
 	}
 
-	if IsArchivedOrder(order) {
+	if isArchivedOrder(order) {
 		return ErrUpdateArchivedOrder
 	}
 
@@ -230,6 +230,6 @@ func checkTimeAvailability(branchID int64, dateStr string) (time.Time, error) {
 	return parsedDate, nil
 }
 
-func IsArchivedOrder(order *domain.Order) bool {
+func isArchivedOrder(order *domain.Order) bool {
 	return order.Status == domain.StatusCompleted || order.Status == domain.StatusCanceled
 }

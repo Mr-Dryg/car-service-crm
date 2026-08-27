@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	StatusNew             = "new"              // Новая неподтвержденная заявка
-	StatusConfirmed       = "confirmed"        // Подтвержденная заявка
-	StatusCancelRequested = "cancel_requested" // Запрос на отмену
-	StatusCanceled        = "canceled"         // Подтвержденная отмена
-	StatusInProgress      = "in_progress"      // Ремонт
-	StatusReady           = "ready"            // Машина готова, ждет выдачи
-	StatusCompleted       = "completed"        // Машина выдана
+	StatusNew             = "new"
+	StatusConfirmed       = "confirmed"
+	StatusCancelRequested = "cancel_requested"
+	StatusCanceled        = "canceled"
+	StatusInProgress      = "in_progress"
+	StatusReady           = "ready"
+	StatusCompleted       = "completed"
 )
 
 const (
@@ -27,7 +27,7 @@ var (
 		return fmt.Errorf("invalid status transition from %q to %q", currentStatus, newStatus)
 	}
 	ErrOrderIsCanceled  = errors.New("invalid status transition on canceled order")
-	ErrOrderIsCompleted = errors.New("forbidden to change status of completed order")
+	ErrOrderIsCompleted = errors.New("forbidden to update status of completed order")
 )
 
 type Order struct {
@@ -45,7 +45,7 @@ type Order struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 }
 
-func (o *Order) ChangeStatus(newStatus string) error {
+func (o *Order) UpdateStatus(newStatus string) error {
 	var validStatuses []string
 
 	switch o.Status {
