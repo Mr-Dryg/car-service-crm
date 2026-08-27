@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Mr-Dryg/car-service-crm/internal/domain"
-	// "github.com/Mr-Dryg/car-service-crm/internal/domain"
 )
 
 func TestCheckTimeAvailability(t *testing.T) {
@@ -45,7 +44,7 @@ func TestCheckTimeAvailability(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			get, err := checkTimeAvailability(test.dateStr)
+			get, err := checkTimeAvailability(0, test.dateStr)
 			if err != test.err {
 				t.Fatalf("excpect err: %v, get: %v", test.err, err)
 			} else if err == nil && !get.Equal(test.parsedDate) {

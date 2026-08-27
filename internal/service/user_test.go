@@ -33,12 +33,7 @@ func TestCreateHashesPassword(t *testing.T) {
 	repo := &fakeUserRepo{}
 	svc := NewUserService(repo)
 
-	user := &domain.User{
-		Name:  "Иван",
-		Phone: "+7 (900) 123-45-67",
-		Email: "ivan@example.com",
-		Role:  "client",
-	}
+	user := domain.NewClient("Ivan", "+7 (900) 123-45-67")
 	password := "secret123"
 
 	err := svc.Create(context.Background(), user, password)

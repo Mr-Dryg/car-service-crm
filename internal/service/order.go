@@ -6,14 +6,19 @@ import (
 	"time"
 
 	"github.com/Mr-Dryg/car-service-crm/internal/domain"
+	"github.com/Mr-Dryg/car-service-crm/internal/pkg/utils"
 )
 
 var (
-	ErrInvalidDateFormat   = errors.New("invalid date format, should use DD-MM-YYYY")
-	ErrDateInPast          = errors.New("forbidden to create order with a date in past")
-	ErrNegativeCost        = errors.New("cost cannot be less than zero")
-	ErrUpdateArchivedOrder = errors.New("forbidden to update archived order")
-	ErrOrderIsNotReady     = errors.New("order must be ready to confirm by user")
+	ErrInvalidDateFormat            = errors.New("invalid date format, should use DD-MM-YYYY")
+	ErrDateInPast                   = errors.New("forbidden to create order with a date in past")
+	ErrNegativeCost                 = errors.New("cost cannot be less than zero")
+	ErrUpdateArchivedOrder          = errors.New("forbidden to update archived order")
+	ErrOrderIsNotReady              = errors.New("order status must be ready to confirm by user")
+	ErrEmptyRequiredFields          = errors.New("not all required fields are filled in")
+	ErrInvalidBranchId              = errors.New("invalid branch_id")
+	ErrInvalidOrderStatus           = errors.New("invalid order status")
+	ErrInvalidBranchIdForConfStatus = errors.New("invalid branch_id for order with status confirmed or in_progress")
 )
 
 type OrderRepository interface {
@@ -29,36 +34,106 @@ type OrderRepository interface {
 }
 
 type OrderService struct {
-	orderRepo OrderRepository
+	orderRepo  OrderRepository
+	userRepo   UserRepository
+	carRepo    CarRepository
+	branchRepo BranchRepository
 }
 
-func NewOrderService(repo OrderRepository) *OrderService {
+func NewOrderService(or OrderRepository, ur UserRepository, cr CarRepository, br BranchRepository) *OrderService {
 	return &OrderService{
-		orderRepo: repo,
+		orderRepo:  or,
+		userRepo:   ur,
+		carRepo:    cr,
+		branchRepo: br,
 	}
 }
 
-func (s *OrderService) Create(ctx context.Context, order *domain.Order) error {
-	if order.BranchID < 0 {
-		return errors.New("invalid branch_id")
+type RegisterOrderInput struct {
+	ClientName      string
+	ClientPhone     string
+	CarBrand        string
+	CarModel        string
+	CarLicensePlate string
+	BranchID        int64
+	ServiceType     string
+	PreferredDate   string
+	PreferredTime   string
+	Notes           string
+}
+
+type RegisterManagerOrderInput struct {
+	RegisterOrderInput
+	Status string
+	Cost   float64
+}
+
+func (s *OrderService) CreateFromUser(ctx context.Context, input RegisterOrderInput) (*domain.Order, error) {
+	return s.createOrder(ctx, input, domain.StatusNew, 0.0)
+}
+
+func (s *OrderService) CreateFromManager(ctx context.Context, input RegisterManagerOrderInput) (*domain.Order, error) {
+	switch input.Status {
+	case domain.StatusNew, domain.StatusConfirmed, domain.StatusInProgress, domain.StatusReady, domain.StatusCompleted, domain.StatusCanceled:
+	default:
+		return nil, ErrInvalidOrderStatus
 	}
-	if order.CarID <= 0 {
-		return errors.New("invalid car_id")
+
+	if (input.Status == domain.StatusConfirmed || input.Status == domain.StatusInProgress) && input.BranchID <= 0 {
+		return nil, ErrInvalidBranchIdForConfStatus
 	}
-	parsedDate, err := checkTimeAvailability(order.PreferredDate)
+
+	if input.Cost < 0 {
+		return nil, ErrNegativeCost
+	}
+
+	return s.createOrder(ctx, input.RegisterOrderInput, input.Status, input.Cost)
+}
+
+func (s *OrderService) createOrder(ctx context.Context, input RegisterOrderInput, status string, cost float64) (*domain.Order, error) {
+	parsedDate, err := checkTimeAvailability(input.BranchID, input.PreferredDate)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if order.Status == "" {
-		order.Status = domain.StatusNew
+	input.ClientPhone = utils.NormalizePhone(input.ClientPhone)
+	input.CarLicensePlate = utils.NormalizeCarPlate(input.CarLicensePlate)
+
+	user, err := s.userRepo.GetByPhone(ctx, input.ClientPhone)
+	if err != nil {
+		user = domain.NewClient(input.ClientName, input.ClientPhone)
+		if err = s.userRepo.Create(ctx, user); err != nil {
+			return nil, err
+		}
 	}
 
-	if order.Cost < 0 {
-		return ErrNegativeCost
+	car, err := s.carRepo.GetByLicensePlate(ctx, input.CarLicensePlate)
+	if err != nil {
+		car = &domain.Car{
+			UserID:       user.ID,
+			LicensePlate: input.CarLicensePlate,
+			Brand:        input.CarBrand,
+			Model:        input.CarModel,
+		}
+		if err = s.carRepo.Create(ctx, car); err != nil {
+			return nil, err
+		}
 	}
 
-	return s.orderRepo.Create(ctx, order, parsedDate)
+	order := &domain.Order{
+		BranchID:      input.BranchID,
+		CarID:         car.ID,
+		ServiceType:   input.ServiceType,
+		Status:        status,
+		PreferredDate: input.PreferredDate,
+		PreferredTime: input.PreferredTime,
+		Cost:          cost,
+		Notes:         input.Notes,
+	}
+	if err = s.orderRepo.Create(ctx, order, parsedDate); err != nil {
+		return nil, err
+	}
+	return order, nil
 }
 
 func (s *OrderService) GetOrder(ctx context.Context, orderID int64) (*domain.Order, error) {
@@ -88,12 +163,16 @@ func (s *OrderService) ChangeStatus(ctx context.Context, orderID int64, status s
 }
 
 func (s *OrderService) RescheduleOrder(ctx context.Context, orderID int64, prefDate, prefTime string) error {
-	err := s.checkIfOrderArchived(ctx, orderID)
+	order, err := s.orderRepo.GetByOrderID(ctx, orderID)
 	if err != nil {
 		return err
 	}
 
-	parsedDate, err := checkTimeAvailability(prefDate)
+	if IsArchivedOrder(order) {
+		return ErrUpdateArchivedOrder
+	}
+
+	parsedDate, err := checkTimeAvailability(order.BranchID, prefDate)
 	if err != nil {
 		return err
 	}
@@ -101,9 +180,13 @@ func (s *OrderService) RescheduleOrder(ctx context.Context, orderID int64, prefD
 }
 
 func (s *OrderService) UpdateCost(ctx context.Context, orderID int64, cost float64) error {
-	err := s.checkIfOrderArchived(ctx, orderID)
+	order, err := s.orderRepo.GetByOrderID(ctx, orderID)
 	if err != nil {
 		return err
+	}
+
+	if IsArchivedOrder(order) {
+		return ErrUpdateArchivedOrder
 	}
 
 	if cost < 0 {
@@ -128,7 +211,13 @@ func (s *OrderService) UpdateNotes(ctx context.Context, orderID int64, notes str
 	return s.orderRepo.UpdateNotes(ctx, orderID, notes)
 }
 
-func checkTimeAvailability(dateStr string) (time.Time, error) {
+func checkTimeAvailability(branchID int64, dateStr string) (time.Time, error) {
+	if branchID < 0 {
+		return time.Time{}, ErrInvalidBranchId
+	} /* else if branchID > 0 {
+		TODO
+	} */
+
 	parsedDate, err := time.Parse(domain.DateLayout, dateStr)
 	if err != nil {
 		return time.Time{}, ErrInvalidDateFormat
@@ -141,13 +230,6 @@ func checkTimeAvailability(dateStr string) (time.Time, error) {
 	return parsedDate, nil
 }
 
-func (s *OrderService) checkIfOrderArchived(ctx context.Context, orderID int64) error {
-	order, err := s.orderRepo.GetByOrderID(ctx, orderID)
-	if err != nil {
-		return err
-	}
-	if order.Status == domain.StatusCompleted || order.Status == domain.StatusCanceled {
-		return ErrUpdateArchivedOrder
-	}
-	return nil
+func IsArchivedOrder(order *domain.Order) bool {
+	return order.Status == domain.StatusCompleted || order.Status == domain.StatusCanceled
 }
