@@ -49,71 +49,52 @@ func NewOrderService(or OrderRepository, ur UserRepository, cr CarRepository, br
 	}
 }
 
-type RegisterOrderInput struct {
-	ClientName      string
-	ClientPhone     string
-	CarBrand        string
-	CarModel        string
-	CarLicensePlate string
-	BranchID        int64
-	ServiceType     string
-	PreferredDate   string
-	PreferredTime   string
-	Notes           string
+func (s *OrderService) CreateFromUser(ctx context.Context, req domain.CreateOrderRequest) (*domain.Order, error) {
+	return s.createOrder(ctx, req, domain.StatusNew, 0.0)
 }
 
-type RegisterManagerOrderInput struct {
-	RegisterOrderInput
-	Status string
-	Cost   float64
-}
-
-func (s *OrderService) CreateFromUser(ctx context.Context, input RegisterOrderInput) (*domain.Order, error) {
-	return s.createOrder(ctx, input, domain.StatusNew, 0.0)
-}
-
-func (s *OrderService) CreateFromManager(ctx context.Context, input RegisterManagerOrderInput) (*domain.Order, error) {
-	switch input.Status {
+func (s *OrderService) CreateFromManager(ctx context.Context, req domain.CreateManagerOrderRequest) (*domain.Order, error) {
+	switch req.Status {
 	case domain.StatusNew, domain.StatusConfirmed, domain.StatusInProgress, domain.StatusReady, domain.StatusCompleted, domain.StatusCanceled:
 	default:
 		return nil, ErrInvalidOrderStatus
 	}
 
-	if (input.Status == domain.StatusConfirmed || input.Status == domain.StatusInProgress) && input.BranchID <= 0 {
+	if (req.Status == domain.StatusConfirmed || req.Status == domain.StatusInProgress) && req.BranchID <= 0 {
 		return nil, ErrInvalidBranchIdForConfStatus
 	}
 
-	if input.Cost < 0 {
+	if req.Cost < 0 {
 		return nil, ErrNegativeCost
 	}
 
-	return s.createOrder(ctx, input.RegisterOrderInput, input.Status, input.Cost)
+	return s.createOrder(ctx, req.CreateOrderRequest, req.Status, req.Cost)
 }
 
-func (s *OrderService) createOrder(ctx context.Context, input RegisterOrderInput, status string, cost float64) (*domain.Order, error) {
-	parsedDate, err := checkTimeAvailability(input.BranchID, input.PreferredDate)
+func (s *OrderService) createOrder(ctx context.Context, req domain.CreateOrderRequest, status string, cost float64) (*domain.Order, error) {
+	parsedDate, err := checkTimeAvailability(req.BranchID, req.PreferredDate)
 	if err != nil {
 		return nil, err
 	}
 
-	input.ClientPhone = utils.NormalizePhone(input.ClientPhone)
-	input.CarLicensePlate = utils.NormalizeCarPlate(input.CarLicensePlate)
+	req.ClientPhone = utils.NormalizePhone(req.ClientPhone)
+	req.CarLicensePlate = utils.NormalizeCarPlate(req.CarLicensePlate)
 
-	user, err := s.userRepo.GetByPhone(ctx, input.ClientPhone)
+	user, err := s.userRepo.GetByPhone(ctx, req.ClientPhone)
 	if err != nil {
-		user = domain.NewClient(input.ClientName, input.ClientPhone)
+		user = domain.NewClient(req.ClientName, req.ClientPhone)
 		if err = s.userRepo.Create(ctx, user); err != nil {
 			return nil, err
 		}
 	}
 
-	car, err := s.carRepo.GetByLicensePlate(ctx, input.CarLicensePlate)
+	car, err := s.carRepo.GetByLicensePlate(ctx, req.CarLicensePlate)
 	if err != nil {
 		car = &domain.Car{
 			UserID:       user.ID,
-			LicensePlate: input.CarLicensePlate,
-			Brand:        input.CarBrand,
-			Model:        input.CarModel,
+			LicensePlate: req.CarLicensePlate,
+			Brand:        req.CarBrand,
+			Model:        req.CarModel,
 		}
 		if err = s.carRepo.Create(ctx, car); err != nil {
 			return nil, err
@@ -121,14 +102,14 @@ func (s *OrderService) createOrder(ctx context.Context, input RegisterOrderInput
 	}
 
 	order := &domain.Order{
-		BranchID:      input.BranchID,
+		BranchID:      req.BranchID,
 		CarID:         car.ID,
-		ServiceType:   input.ServiceType,
+		ServiceType:   req.ServiceType,
 		Status:        status,
-		PreferredDate: input.PreferredDate,
-		PreferredTime: input.PreferredTime,
+		PreferredDate: req.PreferredDate,
+		PreferredTime: req.PreferredTime,
 		Cost:          cost,
-		Notes:         input.Notes,
+		Notes:         req.Notes,
 	}
 	if err = s.orderRepo.Create(ctx, order, parsedDate); err != nil {
 		return nil, err

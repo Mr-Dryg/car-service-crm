@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 	"time"
+
+	"github.com/Mr-Dryg/car-service-crm/internal/pkg/utils"
 )
 
 const (
@@ -70,4 +72,40 @@ func (o *Order) UpdateStatus(newStatus string) error {
 		return nil
 	}
 	return ErrInvalidStatusTransition(o.Status, newStatus)
+}
+
+type CreateOrderRequest struct {
+	ClientName      string
+	ClientPhone     string
+	CarBrand        string
+	CarModel        string
+	CarLicensePlate string
+	BranchID        int64
+	ServiceType     string
+	PreferredDate   string
+	PreferredTime   string
+	Notes           string
+}
+
+func (i *CreateOrderRequest) Validate() error {
+	if !utils.IsValidPhone(i.ClientPhone) {
+		return errors.New("invalid phone format")
+	}
+	if !utils.IsValidCarPlate(i.CarLicensePlate) {
+		return errors.New("invalid car plate format")
+	}
+	return nil
+}
+
+type CreateManagerOrderRequest struct {
+	CreateOrderRequest
+	Status string
+	Cost   float64
+}
+
+func (req *CreateManagerOrderRequest) Validate() error {
+	if err := req.CreateOrderRequest.Validate(); err != nil {
+		return err
+	}
+	return nil
 }
