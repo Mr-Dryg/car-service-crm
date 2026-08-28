@@ -12,7 +12,7 @@ INSERT INTO cars (user_id, license_plate, brand, model) VALUES
 ((SELECT id FROM users WHERE email = 'petr@example.com'), 'В222ВВ77', 'BMW', 'X5'),
 ((SELECT id FROM users WHERE email = 'anna@example.com'), 'С333СС77', 'Kia', 'Rio');
 
-INSERT INTO orders (branch_id, car_id, service_type, status, preferred_date, preferred_time, cost) VALUES
+INSERT INTO orders (branch_id, car_id, service_type, status, preferred_date, preferred_time, price) VALUES
 (
     1, 
     (SELECT id FROM cars WHERE license_plate = 'А111АА77'), 
@@ -23,7 +23,7 @@ INSERT INTO orders (branch_id, car_id, service_type, status, preferred_date, pre
     4500.00
 );
 
-INSERT INTO orders (branch_id, car_id, service_type, status, preferred_date, preferred_time, cost) VALUES
+INSERT INTO orders (branch_id, car_id, service_type, status, preferred_date, preferred_time, price) VALUES
 (
     1, 
     (SELECT id FROM cars WHERE license_plate = 'В222ВВ77'), 
@@ -34,7 +34,7 @@ INSERT INTO orders (branch_id, car_id, service_type, status, preferred_date, pre
     2000.00
 );
 
-INSERT INTO orders (branch_id, car_id, service_type, status, preferred_date, preferred_time, cost) VALUES
+INSERT INTO orders (branch_id, car_id, service_type, status, preferred_date, preferred_time, price) VALUES
 (
     2, 
     (SELECT id FROM cars WHERE license_plate = 'С333СС77'), 

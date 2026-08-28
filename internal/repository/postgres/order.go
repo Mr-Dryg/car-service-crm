@@ -20,7 +20,7 @@ func NewOrderRepository(pool *pgxpool.Pool) *OrderRepository {
 
 func (r *OrderRepository) Create(ctx context.Context, order *domain.Order, parsedDate time.Time) error {
 	query := `INSERT INTO orders (branch_id, car_id, service_type, status,
-			  preferred_date, preferred_time, cost, client_confirmed, notes)
+			  preferred_date, preferred_time, price, client_confirmed, notes)
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			  RETURNING id, created_at, updated_at`
 	var branchID *int64
@@ -33,7 +33,7 @@ func (r *OrderRepository) Create(ctx context.Context, order *domain.Order, parse
 	}
 	err := r.db.QueryRow(
 		ctx, query, branchID, order.CarID, order.ServiceType,
-		order.Status, parsedDate, order.PreferredTime, order.Cost,
+		order.Status, parsedDate, order.PreferredTime, order.Price,
 		order.ClientConfirmed, notes,
 	).Scan(&order.ID, &order.CreatedAt, &order.UpdatedAt)
 	return err
@@ -41,7 +41,7 @@ func (r *OrderRepository) Create(ctx context.Context, order *domain.Order, parse
 
 func (r *OrderRepository) GetByOrderID(ctx context.Context, orderID int64) (*domain.Order, error) {
 	query := `SELECT id, branch_id, car_id, service_type,
-			  status, preferred_date, preferred_time, cost,
+			  status, preferred_date, preferred_time, price,
 			  client_confirmed, notes, created_at, updated_at
 			  FROM orders WHERE id = $1`
 	row := r.db.QueryRow(ctx, query, orderID)
@@ -50,7 +50,7 @@ func (r *OrderRepository) GetByOrderID(ctx context.Context, orderID int64) (*dom
 
 func (r *OrderRepository) GetByBranchID(ctx context.Context, branchID int64, includeCommon bool) ([]domain.Order, error) {
 	query := `SELECT id, branch_id, car_id, service_type,
-			  status, preferred_date, preferred_time, cost,
+			  status, preferred_date, preferred_time, price,
 			  client_confirmed, notes, created_at, updated_at
 			  FROM orders WHERE branch_id = $1`
 	if includeCommon {
@@ -75,7 +75,7 @@ func (r *OrderRepository) GetByBranchID(ctx context.Context, branchID int64, inc
 
 func (r *OrderRepository) GetByCarID(ctx context.Context, carID int64) ([]domain.Order, error) {
 	query := `SELECT id, branch_id, car_id, service_type,
-			  status, preferred_date, preferred_time, cost,
+			  status, preferred_date, preferred_time, price,
 			  client_confirmed, notes, created_at, updated_at
 			  FROM orders WHERE car_id = $1`
 	rows, err := r.db.Query(ctx, query, carID)
@@ -107,9 +107,9 @@ func (r *OrderRepository) UpdateSchedule(ctx context.Context, orderID int64, pre
 	return err
 }
 
-func (r *OrderRepository) UpdateCost(ctx context.Context, orderID int64, cost float64) error {
-	query := `UPDATE orders SET cost = $1, updated_at = NOW() WHERE id = $2`
-	_, err := r.db.Exec(ctx, query, cost, orderID)
+func (r *OrderRepository) UpdatePrice(ctx context.Context, orderID int64, price float64) error {
+	query := `UPDATE orders SET price = $1, updated_at = NOW() WHERE id = $2`
+	_, err := r.db.Exec(ctx, query, price, orderID)
 	return err
 }
 
@@ -136,7 +136,7 @@ func scanOrder(row rowScanner) (*domain.Order, error) {
 	var notes *string
 	err := row.Scan(
 		&order.ID, &branchID, &order.CarID, &order.ServiceType,
-		&order.Status, &prefDate, &prefTime, &order.Cost,
+		&order.Status, &prefDate, &prefTime, &order.Price,
 		&order.ClientConfirmed, &notes, &order.CreatedAt, &order.UpdatedAt,
 	)
 	if err != nil {

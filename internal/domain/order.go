@@ -40,7 +40,7 @@ type Order struct {
 	Status          string    `json:"status"`
 	PreferredDate   string    `json:"preferred_date"`
 	PreferredTime   string    `json:"preferred_time"`
-	Cost            float64   `json:"cost"`
+	Price           float64   `json:"price"`
 	ClientConfirmed bool      `json:"client_confirmed"`
 	Notes           string    `json:"notes"`
 	CreatedAt       time.Time `json:"created_at"`
@@ -100,7 +100,7 @@ func (i *CreateOrderRequest) Validate() error {
 type CreateManagerOrderRequest struct {
 	CreateOrderRequest
 	Status string
-	Cost   float64
+	Price  float64
 }
 
 func (req *CreateManagerOrderRequest) Validate() error {

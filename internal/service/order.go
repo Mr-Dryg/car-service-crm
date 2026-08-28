@@ -12,7 +12,7 @@ import (
 var (
 	ErrInvalidDateFormat            = errors.New("invalid date format, should use DD-MM-YYYY")
 	ErrDateInPast                   = errors.New("forbidden to create order with a date in past")
-	ErrNegativeCost                 = errors.New("cost cannot be less than zero")
+	ErrNegativePrice                = errors.New("price cannot be less than zero")
 	ErrUpdateArchivedOrder          = errors.New("forbidden to update archived order")
 	ErrOrderIsNotReady              = errors.New("order status must be ready to confirm by user")
 	ErrEmptyRequiredFields          = errors.New("not all required fields are filled in")
@@ -28,7 +28,7 @@ type OrderRepository interface {
 	GetByCarID(ctx context.Context, carID int64) ([]domain.Order, error)
 	UpdateStatus(ctx context.Context, orderID int64, status string) error
 	UpdateSchedule(ctx context.Context, orderID int64, prefDate time.Time, prefTime string) error
-	UpdateCost(ctx context.Context, orderID int64, cost float64) error
+	UpdatePrice(ctx context.Context, orderID int64, price float64) error
 	UpdateClientConfirmed(ctx context.Context, orderID int64, flag bool) error
 	UpdateNotes(ctx context.Context, orderID int64, notes string) error
 }
@@ -64,14 +64,14 @@ func (s *OrderService) CreateFromManager(ctx context.Context, req domain.CreateM
 		return nil, ErrInvalidBranchIdForConfStatus
 	}
 
-	if req.Cost < 0 {
-		return nil, ErrNegativeCost
+	if req.Price < 0 {
+		return nil, ErrNegativePrice
 	}
 
-	return s.createOrder(ctx, req.CreateOrderRequest, req.Status, req.Cost)
+	return s.createOrder(ctx, req.CreateOrderRequest, req.Status, req.Price)
 }
 
-func (s *OrderService) createOrder(ctx context.Context, req domain.CreateOrderRequest, status string, cost float64) (*domain.Order, error) {
+func (s *OrderService) createOrder(ctx context.Context, req domain.CreateOrderRequest, status string, price float64) (*domain.Order, error) {
 	parsedDate, err := checkTimeAvailability(req.BranchID, req.PreferredDate)
 	if err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (s *OrderService) createOrder(ctx context.Context, req domain.CreateOrderRe
 		Status:        status,
 		PreferredDate: req.PreferredDate,
 		PreferredTime: req.PreferredTime,
-		Cost:          cost,
+		Price:         price,
 		Notes:         req.Notes,
 	}
 	if err = s.orderRepo.Create(ctx, order, parsedDate); err != nil {
@@ -160,7 +160,7 @@ func (s *OrderService) RescheduleOrder(ctx context.Context, orderID int64, prefD
 	return s.orderRepo.UpdateSchedule(ctx, orderID, parsedDate, prefTime)
 }
 
-func (s *OrderService) UpdateCost(ctx context.Context, orderID int64, cost float64) error {
+func (s *OrderService) UpdatePrice(ctx context.Context, orderID int64, price float64) error {
 	order, err := s.orderRepo.GetByOrderID(ctx, orderID)
 	if err != nil {
 		return err
@@ -170,10 +170,10 @@ func (s *OrderService) UpdateCost(ctx context.Context, orderID int64, cost float
 		return ErrUpdateArchivedOrder
 	}
 
-	if cost < 0 {
-		return ErrNegativeCost
+	if price < 0 {
+		return ErrNegativePrice
 	}
-	return s.orderRepo.UpdateCost(ctx, orderID, cost)
+	return s.orderRepo.UpdatePrice(ctx, orderID, price)
 }
 
 func (s *OrderService) ConfirmReceipt(ctx context.Context, orderID int64) error {

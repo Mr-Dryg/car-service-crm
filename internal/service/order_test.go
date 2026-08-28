@@ -89,8 +89,8 @@ func TestCheckTimeAvailability(t *testing.T) {
 // 	return nil
 // }
 
-// func (f *fakeOrderRepo) UpdateCost(ctx context.Context, orderID int64, cost float64) error {
-// 	f.created.Cost = cost
+// func (f *fakeOrderRepo) UpdatePrice(ctx context.Context, orderID int64, price float64) error {
+// 	f.created.Price = price
 // 	return nil
 // }
 
